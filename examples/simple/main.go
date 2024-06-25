@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/nexidian/gocliselect"
+	"github.com/lukasFindura/gocliselect"
 )
 
 func main() {
-	menu := gocliselect.NewMenu("Chose a colour")
+	menu := gocliselect.NewMenu("Chose a colour", 0)
 
 	menu.AddItem("Red", "red")
 	menu.AddItem("Blue", "blue")
@@ -14,7 +14,7 @@ func main() {
 	menu.AddItem("Yellow", "yellow")
 	menu.AddItem("Cyan", "cyan")
 
-	choice := menu.Display()
-
-	fmt.Printf("Choice: %s\n", choice)
+	if choice := menu.Display(menu); choice != nil {
+		fmt.Printf("Choice: %s\n", choice.Text)
+	}
 }

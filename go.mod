@@ -1,4 +1,4 @@
-module github.com/nexidian/gocliselect
+module github.com/lukasFindura/gocliselect
 
 go 1.17
 
@@ -8,3 +8,5 @@ require (
 )
 
 require golang.org/x/sys v0.1.0 // indirect
+
+replace github.com/lukasFindura/gocliselect => ./gocliselect

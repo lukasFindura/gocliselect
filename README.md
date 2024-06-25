@@ -1,57 +1,18 @@
 # Golang CLI Select
-Lightweight interactive CLI selection library 
+## Fork of https://github.com/Nexidian/gocliselect
+In this fork I implemented submenu options so the items can be in a nested structure.
 
-![](https://media.giphy.com/media/Nmc3muJhaCfPe2LWd9/giphy.gif)
+## Examples
 
+[examples/simple/main.go]()
 
-## Import the package
-```go
-import "github.com/nexidian/gocliselect"
-```
+![](examples/simple/example.gif)
 
-## Usage
-Create a new menu, supplying the question as a parameter
+[examples/advanced/main.go]()
 
-```go
-menu := gocliselect.NewMenu("Chose a colour")
-```
+![](examples/advanced/example.gif)
 
-Add any number of options by calling `AddItem()` supplying the display text of the option
-as well as the id
-```go
-menu.AddItem("Red", "red")
-menu.AddItem("Blue", "blue")
-menu.AddItem("Green", "green")
-menu.AddItem("Yellow", "yellow")
-menu.AddItem("Cyan", "cyan")
-```
+## Known issues
 
-To display the menu and away the user choice call `Display()`
-
-```go
-choice := menu.Display()
-```
-
-## Example
-```go
-package main
-
-import (
-    "fmt"
-    "github.com/nexidian/gocliselect"
-)
-
-func main() {
-    menu := gocliselect.NewMenu("Chose a colour")
-
-    menu.AddItem("Red", "red")
-    menu.AddItem("Blue", "blue")
-    menu.AddItem("Green", "green")
-    menu.AddItem("Yellow", "yellow")
-    menu.AddItem("Cyan", "cyan")
-
-    choice := menu.Display()
-
-    fmt.Printf("Choice: %s\n", choice)
-}
-```
+#### Text flickering
+It seems `\033[J` (clear from cursor down) is causing random text flickering.
