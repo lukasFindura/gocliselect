@@ -14,7 +14,7 @@ func main() {
 	menu.AddItem("Yellow", "yellow")
 	menu.AddItem("Cyan", "cyan")
 
-	if choice := menu.Display(menu); choice != nil {
+	if _, choice := menu.Display(menu); choice != nil {
 		fmt.Printf("Choice: %s\n", choice.Text)
 	}
 }

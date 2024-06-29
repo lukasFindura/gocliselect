@@ -1,6 +1,6 @@
 # Golang CLI Select
 ## Fork of https://github.com/Nexidian/gocliselect
-In this fork I implemented submenu options so the items can be in a nested structure.
+In this fork I implemented submenu options so the items can be in a nested structure + some configuration options for cursor and colors.
 
 ## Examples
 
@@ -15,4 +15,5 @@ In this fork I implemented submenu options so the items can be in a nested struc
 ## Known issues
 
 #### Text flickering
-It seems `\033[J` (clear from cursor down) is causing random text flickering.
+Happening in iterm2 only.
+My guess is codes clearing the content are the cause.

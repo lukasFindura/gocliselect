@@ -128,11 +128,11 @@ func main() {
       ]
     }`
 
-    gocliselect.Cursor.ItemPrompt = "▶"
-    gocliselect.Cursor.SubMenuPrompt = "●"
-    gocliselect.Cursor.Color = goterm.CYAN
+    gocliselect.Cursor.ItemPrompt = "❯"
+    gocliselect.Cursor.SubMenuPrompt = "❯"
+    gocliselect.Cursor.ItemColor = goterm.YELLOW
+    gocliselect.Cursor.SubMenuColor = goterm.CYAN
     gocliselect.Cursor.Suffix = " "
-    gocliselect.Cursor.IndentMultiplier = 2
 
     var colorData ColorData
     err := json.Unmarshal([]byte(jsonData), &colorData)
@@ -143,7 +143,7 @@ func main() {
 
     // fmt.Printf("Color: %s\n", colorData.Color)
     menu := createMenu(colorData.Color, colorData.Items, 0)
-    if choice := menu.Display(menu); choice != nil {
+    if _, choice := menu.Display(menu); choice != nil {
       fmt.Printf("Choice: %s\n", choice.Text)
     }
 }

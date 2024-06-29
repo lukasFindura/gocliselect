@@ -9,16 +9,18 @@ import (
 )
 
 type CursorConfig struct {
-    Color int
+    ItemColor int
     ItemPrompt string
+    SubMenuColor int
     SubMenuPrompt string
     Suffix string
 	IndentMultiplier int
 }
 
 var Cursor = CursorConfig{
-    Color:  goterm.YELLOW,
+    ItemColor:  goterm.YELLOW,
     ItemPrompt: ">",
+    SubMenuColor:  goterm.YELLOW,
 	SubMenuPrompt: ">",
     Suffix: "  ",
 	IndentMultiplier: 4,
@@ -95,7 +97,7 @@ func (m *Menu) renderRecursivelyUp(root *Menu) {
 		menuItemText := menuItem.Text
 		cursor := " " + Cursor.Suffix
 		if index == m.ParentMenu.CursorPos {
-			menuItemText = goterm.Color(menuItemText, Cursor.Color)
+			menuItemText = goterm.Color(goterm.Bold(menuItemText), Cursor.SubMenuColor)
 		}
 		fmt.Printf("\r%s%s%s\n", strings.Repeat(" ", m.ParentMenu.Level * Cursor.IndentMultiplier), cursor, menuItemText)
 		linesOnInput++
@@ -117,11 +119,15 @@ func (m *Menu) renderRecursivelyDown(root *Menu) {
 func (m *Menu) RenderMenu(root *Menu) {
 	// move cursor up N lines
 	if linesOnInput > 0 {
-		fmt.Printf("\r\033[%dA", linesOnInput)
+		// for i := 0; i < linesOnInput; i++ {
+		// 	fmt.Print("\033[1A\033[2K")
+		// }
+		goterm.MoveCursorUp(linesOnInput)
+		// clear screen from cursor down
+		fmt.Fprint(goterm.Screen, "\033[0J")
+		goterm.Flush()
 		linesOnInput = 0
 	}
-	// clear screen from cursor down
-	fmt.Print("\033[J")
 	if m != root {
 		m.renderRecursivelyUp(root)
 	}
@@ -130,11 +136,12 @@ func (m *Menu) RenderMenu(root *Menu) {
 		cursor := " " + Cursor.Suffix
 		if index == m.CursorPos {
 			if menuItem.SubMenu != nil {
-				cursor = goterm.Color(Cursor.SubMenuPrompt + Cursor.Suffix, Cursor.Color)
+				cursor = goterm.Color(Cursor.SubMenuPrompt + Cursor.Suffix, Cursor.SubMenuColor)
+				menuItemText = goterm.Color(goterm.Bold(menuItemText), Cursor.SubMenuColor)
 			} else {
-				cursor = goterm.Color(Cursor.ItemPrompt + Cursor.Suffix, Cursor.Color)
+				cursor = goterm.Color(Cursor.ItemPrompt + Cursor.Suffix, Cursor.ItemColor)
+				menuItemText = goterm.Color(goterm.Bold(menuItemText), Cursor.ItemColor)
 			}
-			menuItemText = goterm.Color(menuItemText, Cursor.Color)
 		}
 		fmt.Printf("\r%s%s%s\n", strings.Repeat(" ", m.Level * Cursor.IndentMultiplier), cursor, menuItemText)
 		linesOnInput++
@@ -145,8 +152,8 @@ func (m *Menu) RenderMenu(root *Menu) {
 }
 
 // Display will display the given menu and awaits user selection
-// It returns the users selected choice
-func (m *Menu) Display(root *Menu) *MenuItem {
+// It returns the users selected choice and the choice's menu
+func (m *Menu) Display(root *Menu) (*Menu, *MenuItem) {
 	defer func() {
 		// Show cursor again.
 		fmt.Printf("\033[?25h")
@@ -161,13 +168,13 @@ func (m *Menu) Display(root *Menu) *MenuItem {
 		switch keyCode := getInput(); keyCode {
 
 		case escape, ctrl_c:
-			return nil
+			return m, nil
 
 		case left:
 			if m.ParentMenu != nil {
 				return m.ParentMenu.Display(root)
 			}
-			return nil
+			return m, nil
 
 		case right:
 			menuItem := m.MenuItems[m.CursorPos]
@@ -175,7 +182,7 @@ func (m *Menu) Display(root *Menu) *MenuItem {
 				return menuItem.SubMenu.Display(root)
 			}
 			linesOnInput = 0
-			return menuItem
+			return m, menuItem
 
 		case up:
 			m.CursorPos = (m.CursorPos + len(m.MenuItems) - 1) % len(m.MenuItems)
