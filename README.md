@@ -15,5 +15,8 @@ In this fork I implemented submenu options so the items can be in a nested struc
 ## Known issues
 
 #### Text flickering
-Happening in iterm2 only.
-My guess is codes clearing the content are the cause.
+Happening in iterm2 only. Tweaking some of these settings helped:
+
+- General/Magic/GPU rendering
+  - [x] Maximize throughput at the cost of higher latency
+

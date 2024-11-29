@@ -27,6 +27,7 @@ var Cursor = CursorConfig{
 }
 
 // Raw input keycodes
+// See http://www.climagic.org/mirrors/VT100_Escape_Codes.html
 var up byte = 65
 var down byte = 66
 var right byte = 67
@@ -34,6 +35,7 @@ var left byte = 68
 var escape byte = 27
 var ctrl_c byte = 3
 var enter byte = 13
+var help byte = 104  // letter 'h'
 var keys = map[byte]bool {
 	up: true,
 	down: true,
@@ -41,12 +43,12 @@ var keys = map[byte]bool {
 	left: true,
 }
 
-var linesOnInput int = 0
+var LinesOnInput int = 0
 
 type Menu struct {
 	Prompt  	string
 	CursorPos 	int
-	Level		int  // TODO ideally this is computed on the fly
+	Level		int
 	MenuItems 	[]*MenuItem
 	ParentMenu  *Menu
 }
@@ -100,7 +102,7 @@ func (m *Menu) renderRecursivelyUp(root *Menu) {
 			menuItemText = goterm.Color(goterm.Bold(menuItemText), Cursor.SubMenuColor)
 		}
 		fmt.Printf("\r%s%s%s\n", strings.Repeat(" ", m.ParentMenu.Level * Cursor.IndentMultiplier), cursor, menuItemText)
-		linesOnInput++
+		LinesOnInput++
 	}
 }
 
@@ -109,7 +111,7 @@ func (m *Menu) renderRecursivelyDown(root *Menu) {
 		menuItemText := menuItem.Text
 		cursor := " " + Cursor.Suffix
 		fmt.Printf("\r%s%s%s\n", strings.Repeat(" ", m.ParentMenu.Level * Cursor.IndentMultiplier), cursor, menuItemText)
-		linesOnInput++
+		LinesOnInput++
 	}
 	if m.ParentMenu != root {
 		m.ParentMenu.renderRecursivelyDown(root)
@@ -118,15 +120,15 @@ func (m *Menu) renderRecursivelyDown(root *Menu) {
 
 func (m *Menu) RenderMenu(root *Menu) {
 	// move cursor up N lines
-	if linesOnInput > 0 {
+	if LinesOnInput > 0 {
 		// for i := 0; i < linesOnInput; i++ {
 		// 	fmt.Print("\033[1A\033[2K")
 		// }
-		goterm.MoveCursorUp(linesOnInput)
+		goterm.MoveCursorUp(LinesOnInput)
 		// clear screen from cursor down
 		fmt.Fprint(goterm.Screen, "\033[0J")
 		goterm.Flush()
-		linesOnInput = 0
+		LinesOnInput = 0
 	}
 	if m != root {
 		m.renderRecursivelyUp(root)
@@ -144,7 +146,7 @@ func (m *Menu) RenderMenu(root *Menu) {
 			}
 		}
 		fmt.Printf("\r%s%s%s\n", strings.Repeat(" ", m.Level * Cursor.IndentMultiplier), cursor, menuItemText)
-		linesOnInput++
+		LinesOnInput++
 	}
 	if m != root {
 		m.renderRecursivelyDown(root)
@@ -152,7 +154,7 @@ func (m *Menu) RenderMenu(root *Menu) {
 }
 
 // Display will display the given menu and awaits user selection
-// It returns the users selected choice and the choice's menu
+// It returns the users selected choice's menu and choice itself
 func (m *Menu) Display(root *Menu) (*Menu, *MenuItem) {
 	defer func() {
 		// Show cursor again.
@@ -168,20 +170,20 @@ func (m *Menu) Display(root *Menu) (*Menu, *MenuItem) {
 		switch keyCode := getInput(); keyCode {
 
 		case escape, ctrl_c:
-			return m, nil
+			return nil, nil
 
 		case left:
 			if m.ParentMenu != nil {
 				return m.ParentMenu.Display(root)
 			}
-			return m, nil
+			return nil, nil
 
-		case right:
+		case right, enter:
 			menuItem := m.MenuItems[m.CursorPos]
 			if menuItem.SubMenu != nil {
 				return menuItem.SubMenu.Display(root)
 			}
-			linesOnInput = 0
+			LinesOnInput = 0
 			return m, menuItem
 
 		case up:
@@ -191,6 +193,13 @@ func (m *Menu) Display(root *Menu) (*Menu, *MenuItem) {
 		case down:
 			m.CursorPos = (m.CursorPos + 1) % len(m.MenuItems)
 			m.RenderMenu(root)
+		
+		case help:
+			menuItem := m.MenuItems[m.CursorPos]
+			originalText := menuItem.Text
+			menuItem.Text = fmt.Sprintf("%s | %s ", menuItem.Text, menuItem.ID)
+			m.RenderMenu(root)
+			menuItem.Text = originalText
 		}
 	}
 }
