@@ -5,6 +5,7 @@ import (
 	"github.com/buger/goterm"
 	"github.com/pkg/term"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -101,7 +102,7 @@ func (m *Menu) renderRecursivelyUp(root *Menu) {
 		if index == m.ParentMenu.CursorPos {
 			menuItemText = goterm.Color(goterm.Bold(menuItemText), Cursor.SubMenuColor)
 		}
-		fmt.Printf("\r%s%s%s\n", strings.Repeat(" ", m.ParentMenu.Level * Cursor.IndentMultiplier), cursor, menuItemText)
+		fmt.Fprintf(os.Stderr, "\r%s%s%s\n", strings.Repeat(" ", m.ParentMenu.Level * Cursor.IndentMultiplier), cursor, menuItemText)
 		LinesOnInput++
 	}
 }
@@ -110,7 +111,7 @@ func (m *Menu) renderRecursivelyDown(root *Menu) {
 	for _, menuItem := range m.ParentMenu.MenuItems[m.ParentMenu.CursorPos + 1:] {
 		menuItemText := menuItem.Text
 		cursor := " " + Cursor.Suffix
-		fmt.Printf("\r%s%s%s\n", strings.Repeat(" ", m.ParentMenu.Level * Cursor.IndentMultiplier), cursor, menuItemText)
+		fmt.Fprintf(os.Stderr, "\r%s%s%s\n", strings.Repeat(" ", m.ParentMenu.Level * Cursor.IndentMultiplier), cursor, menuItemText)
 		LinesOnInput++
 	}
 	if m.ParentMenu != root {
@@ -121,10 +122,10 @@ func (m *Menu) renderRecursivelyDown(root *Menu) {
 func (m *Menu) RenderMenu(root *Menu) {
 	// move cursor up N lines
 	if LinesOnInput > 0 {
-		// for i := 0; i < linesOnInput; i++ {
-		// 	fmt.Print("\033[1A\033[2K")
-		// }
-		goterm.MoveCursorUp(LinesOnInput)
+		for i := 0; i < LinesOnInput; i++ {
+			fmt.Fprint(os.Stderr, "\033[1A\033[2K")
+		}
+		// goterm.MoveCursorUp(LinesOnInput)
 		// clear screen from cursor down
 		fmt.Fprint(goterm.Screen, "\033[0J")
 		goterm.Flush()
@@ -138,14 +139,14 @@ func (m *Menu) RenderMenu(root *Menu) {
 		cursor := " " + Cursor.Suffix
 		if index == m.CursorPos {
 			if menuItem.SubMenu != nil {
-				cursor = goterm.Color(Cursor.SubMenuPrompt + Cursor.Suffix, Cursor.SubMenuColor)
+				cursor = goterm.Color(goterm.Bold(Cursor.SubMenuPrompt + Cursor.Suffix), Cursor.SubMenuColor)
 				menuItemText = goterm.Color(goterm.Bold(menuItemText), Cursor.SubMenuColor)
 			} else {
-				cursor = goterm.Color(Cursor.ItemPrompt + Cursor.Suffix, Cursor.ItemColor)
+				cursor = goterm.Color(goterm.Bold(Cursor.ItemPrompt + Cursor.Suffix), Cursor.ItemColor)
 				menuItemText = goterm.Color(goterm.Bold(menuItemText), Cursor.ItemColor)
 			}
 		}
-		fmt.Printf("\r%s%s%s\n", strings.Repeat(" ", m.Level * Cursor.IndentMultiplier), cursor, menuItemText)
+		fmt.Fprintf(os.Stderr, "\r%s%s%s\n", strings.Repeat(" ", m.Level * Cursor.IndentMultiplier), cursor, menuItemText)
 		LinesOnInput++
 	}
 	if m != root {
@@ -158,13 +159,13 @@ func (m *Menu) RenderMenu(root *Menu) {
 func (m *Menu) Display(root *Menu) (*Menu, *MenuItem) {
 	defer func() {
 		// Show cursor again.
-		fmt.Printf("\033[?25h")
+		fmt.Fprintf(os.Stderr, "\033[?25h")
 	}()
 
 	m.RenderMenu(root)
 
 	// Turn the terminal cursor off
-	fmt.Printf("\033[?25l")
+	fmt.Fprintf(os.Stderr, "\033[?25l")
 
 	for {
 		switch keyCode := getInput(); keyCode {
@@ -197,7 +198,7 @@ func (m *Menu) Display(root *Menu) (*Menu, *MenuItem) {
 		case help:
 			menuItem := m.MenuItems[m.CursorPos]
 			originalText := menuItem.Text
-			menuItem.Text = fmt.Sprintf("%s | %s ", menuItem.Text, menuItem.ID)
+			menuItem.Text = fmt.Sprintf("%s | %s ", menuItem.Text, strings.ReplaceAll(menuItem.ID, "\n", " ; "))
 			m.RenderMenu(root)
 			menuItem.Text = originalText
 		}
